@@ -13,7 +13,6 @@ Please contact us immediately if:
 + the executable for your platform is missing
 + you think there are problems with the provided executable files
 
-We would prefer to receive solutions in *Go*, as most team members are proficient in these languages.
 
 ## The Challenge
 
