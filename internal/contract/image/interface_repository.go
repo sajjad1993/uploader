@@ -11,7 +11,8 @@ type Reader interface {
 }
 
 type Writer interface {
-	Save(ctx context.Context, image *model.Image)
+	Save(ctx context.Context, image model.Image) error
+	Update(ctx context.Context, image model.Image) error
 }
 
 type Repository interface {

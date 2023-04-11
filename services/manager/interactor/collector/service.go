@@ -11,18 +11,25 @@ import (
 
 // RegisterImage register images to merges theirs chunks
 func (m *Manager) RegisterImage(ctx context.Context, image entity.Image) error {
-	//todo create channel
+
 	imageModel := entity.ImageEntityToModel(image)
-	err := m.imageRepo.Save(ctx, imageModel)
+	//check duplicate image
+	err := m.imageRepo.CheckDuplicate(ctx, imageModel)
 	if err != nil {
 		m.logger.Error(err.Error())
 		return err
 	}
-	imageCollector := newImageCollector(image, m.ImageChannel)
-	go imageCollector.
-	//todo check duplicate image
-	//todo handle error
 	// save to repo
+	err = m.imageRepo.Save(ctx, imageModel)
+	if err != nil {
+		m.logger.Error(err.Error())
+		return err
+	}
+	// create image collector
+	imageCollector := newImageCollector(image, m.imageChannel)
+	m.imageCollectors[image.Sha256] = imageCollector
+	go imageCollector.Gather()
+
 	return nil
 }
 
@@ -42,11 +49,11 @@ func getImageChannel(image entity.Image) chan<- entity.Chunk {
 }
 
 func (m *Manager) gatherChunks(chunksChannel <-chan entity.Chunk) {
-	for chunk := range chunksChannel {
+	for chunkEnt := range chunksChannel {
 		//todo create config
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		err := m.SaveChunk(ctx, chunk)
-		m.logger.Error(fmt.Sprintf("error %s / %s", chunk.Sha256, err))
+		err := m.SaveChunk(ctx, chunkEnt)
+		m.logger.Error(fmt.Sprintf("error %s / %s", chunkEnt.Sha256, err))
 
 	}
 }
@@ -56,13 +63,13 @@ type ImageCollector struct {
 	chunkRepo             chunk.Writer
 	logger                log.Logger
 	chunkChannel          chan entity.Chunk
-	completedImageChannel chan entity.Image
+	completedImageChannel chan string
 	sha256                string
 	completedChunk        int
 	ChunkCount            int
 }
 
-func newImageCollector(image entity.Image, completedImageChannel chan entity.Image) *ImageCollector {
+func newImageCollector(image entity.Image, completedImageChannel chan string) *ImageCollector {
 	chunkCount := getChunkSize(image)
 	chunkChannel := make(chan entity.Chunk, chunkCount)
 	return &ImageCollector{
@@ -76,11 +83,16 @@ func newImageCollector(image entity.Image, completedImageChannel chan entity.Ima
 }
 
 func (ic *ImageCollector) Gather() {
-	for chunk := range ic.chunkChannel {
-		err := ic.saveChunk(chunk)
+	for chunkEnt := range ic.chunkChannel {
+		err := ic.saveChunk(chunkEnt)
 		if err != nil {
 			ic.logger.Error(err.Error())
 		}
+		ic.completedChunk++
+		if ic.completedChunk == ic.ChunkCount {
+			ic.completedImageChannel <- ic.sha256
+		}
+
 	}
 }
 func getChunkSize(image entity.Image) int {
