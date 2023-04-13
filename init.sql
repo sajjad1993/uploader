@@ -1,5 +1,5 @@
 -- table images
-CREATE TABLE "images"
+CREATE TABLE "images" IF NOT EXSITS
 (
     "sha"        varchar(255)             NOT NULL,
     "size"       bigint                   NOT NULL,
@@ -9,10 +9,10 @@ CREATE TABLE "images"
     "created_at" timestamp with time zone NOT NULL
 );
 
-CREATE INDEX ON "images" ("sha");
+CREATE INDEX ON "images" ("sha") IF NOT EXSITS;
 
 -- table images
-CREATE TABLE "chunks"
+CREATE TABLE "chunks" IF NOT EXSITS
 (
     "sha"        varchar(255)             NOT NULL,
     "id"         int                      NOT NULL,
@@ -21,4 +21,4 @@ CREATE TABLE "chunks"
     "created_at" timestamp with time zone NOT NULL
 );
 
-CREATE INDEX ON "chunks" ("sha");
+CREATE INDEX ON "chunks" ("sha") IF NOT EXSITS;

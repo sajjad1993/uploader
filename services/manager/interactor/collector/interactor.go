@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"time"
 )
 
 type Collector struct {
@@ -19,6 +20,7 @@ type Collector struct {
 	logger          log.Logger
 	imageCollectors map[string]*ImageCollector
 	client          rpc.MergerClient
+	timeout         time.Duration
 }
 
 // ImageCollector  get an image and gather its  chunks
@@ -30,9 +32,10 @@ type ImageCollector struct {
 	sha256                string
 	completedChunk        int
 	ChunkCount            int
+	timeout               time.Duration
 }
 
-func NewImageCollector(image entity.Image, completedImageChannel chan string, chunkRepo chunk.Repository, logger log.Logger) *ImageCollector {
+func NewImageCollector(image entity.Image, completedImageChannel chan string, chunkRepo chunk.Repository, logger log.Logger, timeout time.Duration) *ImageCollector {
 	chunkCount := getChunkCount(image)
 	chunkChannel := make(chan entity.Chunk, chunkCount)
 	return &ImageCollector{
@@ -43,10 +46,11 @@ func NewImageCollector(image entity.Image, completedImageChannel chan string, ch
 		completedImageChannel: completedImageChannel,
 		chunkRepo:             chunkRepo,
 		logger:                logger,
+		timeout:               timeout,
 	}
 
 }
-func New(imageRepo image.Repository, chunkRepo chunk.Repository, MergerAddress string, logger log.Logger) (UseCase, error) {
+func New(imageRepo image.Repository, chunkRepo chunk.Repository, MergerAddress string, logger log.Logger, timeout time.Duration) (UseCase, error) {
 	channel := make(chan string)
 	imageCollectors := make(map[string]*ImageCollector)
 	cc, err := grpc.Dial(fmt.Sprintf("%s", MergerAddress), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -64,5 +68,6 @@ func New(imageRepo image.Repository, chunkRepo chunk.Repository, MergerAddress s
 		imageCollectors: imageCollectors,
 		chunkRepo:       chunkRepo,
 		client:          client,
+		timeout:         timeout,
 	}, nil
 }

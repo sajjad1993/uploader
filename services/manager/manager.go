@@ -44,13 +44,13 @@ func main() {
 	imageRepo := repository.NewImageRepo(db)
 	chunkRepo := repository.NewChunkRepo(db)
 
-	collectorService, err := collector.New(imageRepo, chunkRepo, configuration.GrpcServer.Address, logger)
+	collectorService, err := collector.New(imageRepo, chunkRepo, configuration.GrpcServer.Address, logger, configuration.GlobalTimeOut)
 	if err != nil {
 		logger.Fatal("can't connect grpc")
 	}
 	go collectorService.CallMerger()
 	downloaderService := donwloder.New(imageRepo, collectorService.GetChannel(), logger)
-	uploaderService := uploader.New(imageRepo, chunkRepo, logger)
+	uploaderService := uploader.New(imageRepo, configuration.DownloadImage.Retry, configuration.DownloadImage.RetryInterval, logger)
 	// Starting HTTP server
 	handler := v1.NewMangerHandler(downloaderService, collectorService, uploaderService, logger)
 	go runHTTPServer(handler,

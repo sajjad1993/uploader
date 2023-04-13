@@ -8,13 +8,12 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"time"
 )
 
 // StartCollecting create new image collector
 func (c *Collector) StartCollecting(ctx context.Context, image entity.Image) {
 	// create image collector
-	imageCollector := NewImageCollector(image, c.imageChannel, c.chunkRepo, c.logger)
+	imageCollector := NewImageCollector(image, c.imageChannel, c.chunkRepo, c.logger, c.timeout)
 	c.imageCollectors[image.Sha256] = imageCollector
 	go imageCollector.Gather()
 }
@@ -39,7 +38,7 @@ func (c *Collector) SaveChunk(ctx context.Context, chunk entity.Chunk) error {
 func (c *Collector) CallMerger() {
 	for imageHash := range c.imageChannel {
 		//todo call grpc
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, _ := context.WithTimeout(context.Background(), c.timeout)
 		c.logger.Info(fmt.Sprintf("image %s has been completed", imageHash))
 		_, err := c.client.Merge(ctx, &rpc.MergeRequest{Image: &rpc.Image{Sha256: imageHash}})
 		if err != nil {
@@ -96,7 +95,7 @@ func (ic *ImageCollector) writeChunk(chunk entity.Chunk) error {
 
 }
 func (ic *ImageCollector) saveChunk(chunk entity.Chunk) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ic.timeout)
 	defer cancel()
 	chunkModel := entity.ChunkEntityToModel(chunk)
 	err := ic.chunkRepo.Save(ctx, chunkModel)

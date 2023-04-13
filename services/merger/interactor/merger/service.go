@@ -6,7 +6,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"time"
 )
 
 // MergeChunks create image based on chunks
@@ -40,7 +39,7 @@ func (m Merger) mergePic(image entity.Image, chunks []entity.Chunk) {
 		return
 	}
 	//todo config this
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 	err = m.UpdateImage(ctx, image)
 	if err != nil {

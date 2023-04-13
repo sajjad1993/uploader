@@ -1,0 +1,37 @@
+version: "3.0"
+
+services:
+  auth-db:
+    image: postgres:13.4
+    container_name: merger-db
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./merger:/var/lib/postgresql/data
+      - ./../init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - hatman-network
+
+  service-merger:
+    image: hatman/auth
+    container_name: auth
+    build:
+      context: ./..
+    volumes:
+      - ../config/hatman-auth.yaml:/app/config/hatman-auth.yaml
+    ports:
+      - 1280:1280
+      - 1281:1281
+    networks:
+      - hatman-network
+    depends_on:
+      - auth-db
+    links:
+      - auth-db
+
+volumes:
+  auth_data:
+
+networks:
+  hatman-network:
+    driver: bridge

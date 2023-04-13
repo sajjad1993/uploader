@@ -12,7 +12,7 @@ import (
 
 // GetImage Gives image base64
 func (u *Uploader) GetImage(ctx context.Context, sha string) (io.Reader, error) {
-	for i := 0; i < 5; i++ {
+	for i := uint(0); i <= u.retry; i++ {
 		//todo file manager must be moved to repo
 		image, err := u.imageRepo.Get(ctx, sha)
 		if err != nil {
@@ -21,7 +21,7 @@ func (u *Uploader) GetImage(ctx context.Context, sha string) (io.Reader, error) 
 		imageEnt := entity.ImageModelToEntity(*image)
 
 		if imageEnt.Status != string(entity.ReadyStatus) {
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(u.sleepTime)
 			continue
 		}
 		reader, err := u.readImage(ctx, imageEnt)

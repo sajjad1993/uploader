@@ -45,7 +45,7 @@ func main() {
 	imageRepo := repository.NewImageRepo(db)
 	chunkRepo := repository.NewChunkRepo(db)
 
-	mergerService := merger.New(imageRepo, chunkRepo, logger)
+	mergerService := merger.New(imageRepo, chunkRepo, logger, configuration.GlobalTimeOut)
 
 	// Starting Grpc server
 	handler := grpc_server.New(mergerService)

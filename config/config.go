@@ -11,6 +11,10 @@ import (
 type DatabaseConfig struct {
 	Dsn string `env:"DATABASE_DSN,default=host=localhost user=sajjad password=sajjad123 dbname=omp port=5432 sslmode=require TimeZone=UTC"`
 }
+type DownloadImageConfig struct {
+	Retry         uint          `env:"RETRY_DOWNLOAD,default=10"`
+	RetryInterval time.Duration `env:"RETRY_INTERVAL_DOWNLOAD,default=150ms"`
+}
 
 // HTTPServerConfig represents HTTP server configuration values
 type HTTPServerConfig struct {
@@ -24,9 +28,11 @@ type GrpcServiceConfig struct {
 	Address string `env:"GRPC_SERVER_ADDRESS,default=127.0.0.1:2020"`
 }
 type Config struct {
-	Database   DatabaseConfig
-	HTTPServer HTTPServerConfig
-	GrpcServer GrpcServiceConfig
+	Database      DatabaseConfig
+	HTTPServer    HTTPServerConfig
+	GrpcServer    GrpcServiceConfig
+	DownloadImage DownloadImageConfig
+	GlobalTimeOut time.Duration `env:"GLOBAL_TIMEOUT,default=5s"`
 }
 
 // NewConfigFromEnv returns a *Config set by environment variables
