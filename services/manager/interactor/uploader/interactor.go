@@ -1,4 +1,4 @@
-package interactor
+package uploader
 
 import (
 	"OMPFinex-CodeChallenge/internal/contract/chunk"
@@ -6,20 +6,14 @@ import (
 	"OMPFinex-CodeChallenge/pkg/log"
 )
 
-type Manager struct {
-	imageRepo       image.Repository
-	chunkRepo       chunk.Repository
-	logger          log.Logger
-	imageChannel    chan string
-	imageCollectors map[string]*ImageCollector
+type Uploader struct {
+	imageRepo image.Reader
+	logger    log.Logger
 }
 
-func New(imageRepo image.Repository, chunkRepo chunk.Repository, logger log.Logger) *Manager {
-	channel := make(chan string)
-	return &Manager{
-		imageRepo:    imageRepo,
-		chunkRepo:    chunkRepo,
-		logger:       logger,
-		imageChannel: channel,
+func New(imageRepo image.Repository, chunkRepo chunk.Repository, logger log.Logger) UseCase {
+	return &Uploader{
+		imageRepo: imageRepo,
+		logger:    logger,
 	}
 }

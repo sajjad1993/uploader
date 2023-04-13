@@ -3,6 +3,7 @@ package v1
 import (
 	"OMPFinex-CodeChallenge/services/manager/entity"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -13,15 +14,16 @@ func (h MangerHandler) registerImage(writer http.ResponseWriter, request *http.R
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 	}
-
+	err = image.IsValid()
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+	}
 	err = h.downloader.RegisterImage(request.Context(), image)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
-	writer.WriteHeader(http.StatusOK)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
+	h.collector.StartCollecting(request.Context(), image)
+	writer.WriteHeader(http.StatusCreated)
 }
 
 func (h MangerHandler) createChunk(writer http.ResponseWriter, request *http.Request) {
@@ -31,12 +33,20 @@ func (h MangerHandler) createChunk(writer http.ResponseWriter, request *http.Req
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 	}
+	vars := mux.Vars(request)
 
+	sha := vars["sha"]
+	chunk.Sha256 = sha
+	err = chunk.IsValid()
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusBadRequest)
+	}
 	err = h.collector.SaveChunk(request.Context(), chunk)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
-	writer.WriteHeader(http.StatusOK)
+
+	writer.WriteHeader(http.StatusCreated)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}

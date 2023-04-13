@@ -1,90 +1,67 @@
-package interactor
+package collector
 
 import (
-	"OMPFinex-CodeChallenge/internal/contract/chunk"
-	"OMPFinex-CodeChallenge/pkg/log"
+	"OMPFinex-CodeChallenge/pkg/errs"
+	rpc "OMPFinex-CodeChallenge/pkg/rpc/proto"
 	"OMPFinex-CodeChallenge/services/manager/entity"
 	"context"
 	"fmt"
+	"math"
+	"os"
 	"time"
 )
 
-// RegisterImage register images to merges theirs chunks
-func (m *Manager) RegisterImage(ctx context.Context, image entity.Image) error {
-
-	imageModel := entity.ImageEntityToModel(image)
-	//check duplicate image
-	err := m.imageRepo.CheckDuplicate(ctx, imageModel)
-	if err != nil {
-		m.logger.Error(err.Error())
-		return err
-	}
-	// save to repo
-	err = m.imageRepo.Save(ctx, imageModel)
-	if err != nil {
-		m.logger.Error(err.Error())
-		return err
-	}
+// StartCollecting create new image collector
+func (c *Collector) StartCollecting(ctx context.Context, image entity.Image) {
 	// create image collector
-	imageCollector := newImageCollector(image, m.imageChannel)
-	m.imageCollectors[image.Sha256] = imageCollector
+	imageCollector := NewImageCollector(image, c.imageChannel, c.chunkRepo, c.logger)
+	c.imageCollectors[image.Sha256] = imageCollector
 	go imageCollector.Gather()
-
-	return nil
 }
 
 // SaveChunk gathers chunks until they get ready for merging
-func (m *Manager) SaveChunk(ctx context.Context, chunk entity.Chunk) error { return nil }
-
-// GetImage Gives image base64
-func (m *Manager) GetImage() {}
-
-func getImageChannel(image entity.Image) chan<- entity.Chunk {
-	//todo get count perfect
-	var chunkCount float64
-	chunkCount = float64(image.Size / image.Size)
-	chunkChan := make(chan entity.Chunk, chunkCount)
-	return chunkChan
-
+func (c *Collector) SaveChunk(ctx context.Context, chunk entity.Chunk) error {
+	ok, err := c.ImageRepo.DoesExist(ctx, chunk.Sha256)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errs.NewValidationError("The image dose not exist")
+	}
+	imageCollector := c.imageCollectors[chunk.Sha256]
+	if imageCollector == nil {
+		return errs.NewValidationError("The image dose not exist")
+	}
+	imageCollector.chunkChannel <- chunk
+	return nil
 }
 
-func (m *Manager) gatherChunks(chunksChannel <-chan entity.Chunk) {
-	for chunkEnt := range chunksChannel {
-		//todo create config
+func (c *Collector) CallMerger() {
+	for imageHash := range c.imageChannel {
+		//todo call grpc
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		err := m.SaveChunk(ctx, chunkEnt)
-		m.logger.Error(fmt.Sprintf("error %s / %s", chunkEnt.Sha256, err))
+		c.logger.Info(fmt.Sprintf("image %s has been completed", imageHash))
+		_, err := c.client.Merge(ctx, &rpc.MergeRequest{Image: &rpc.Image{Sha256: imageHash}})
+		if err != nil {
+			c.logger.Error(fmt.Sprintf("image %s has been completed", imageHash))
+		}
 
 	}
 }
 
-// ImageCollector  get an image and gather its  chunks
-type ImageCollector struct {
-	chunkRepo             chunk.Writer
-	logger                log.Logger
-	chunkChannel          chan entity.Chunk
-	completedImageChannel chan string
-	sha256                string
-	completedChunk        int
-	ChunkCount            int
+func (c *Collector) GetChannel() chan string {
+	return c.imageChannel
 }
-
-func newImageCollector(image entity.Image, completedImageChannel chan string) *ImageCollector {
-	chunkCount := getChunkSize(image)
-	chunkChannel := make(chan entity.Chunk, chunkCount)
-	return &ImageCollector{
-		sha256:                image.Sha256,
-		completedChunk:        0,
-		ChunkCount:            chunkCount,
-		chunkChannel:          chunkChannel,
-		completedImageChannel: completedImageChannel,
-	}
-
-}
-
 func (ic *ImageCollector) Gather() {
 	for chunkEnt := range ic.chunkChannel {
-		err := ic.saveChunk(chunkEnt)
+
+		err := ic.writeChunk(chunkEnt)
+		if err != nil {
+			//todo handel error
+			ic.logger.Error(err.Error())
+		}
+		chunkEnt.Data = chunkEnt.FileAddress()
+		err = ic.saveChunk(chunkEnt)
 		if err != nil {
 			ic.logger.Error(err.Error())
 		}
@@ -95,10 +72,27 @@ func (ic *ImageCollector) Gather() {
 
 	}
 }
-func getChunkSize(image entity.Image) int {
-	return 0
+
+func getChunkCount(image entity.Image) int {
+	a, b := float64(image.Size), float64(image.ChunkSize)
+	if math.Mod(a, b) == 0 {
+		return int(a / b)
+	}
+	return int(math.Abs(a/b)) + 1
 }
 
+func (ic *ImageCollector) writeChunk(chunk entity.Chunk) error {
+	b := []byte(chunk.Data)
+	err := os.MkdirAll(chunk.FileDir(), 0777)
+
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	//filepath.Join(filepath.F)
+	err = os.WriteFile(chunk.FileAddress(), b, os.ModePerm)
+	return err
+
+}
 func (ic *ImageCollector) saveChunk(chunk entity.Chunk) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

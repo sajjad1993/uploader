@@ -1,25 +1,24 @@
-package interactor
+package donwloder
 
 import (
-	"OMPFinex-CodeChallenge/internal/contract/chunk"
 	"OMPFinex-CodeChallenge/internal/contract/image"
 	"OMPFinex-CodeChallenge/pkg/log"
+	"OMPFinex-CodeChallenge/services/manager/interactor/collector"
 )
 
 type Manager struct {
 	imageRepo       image.Repository
-	chunkRepo       chunk.Repository
 	logger          log.Logger
 	imageChannel    chan string
-	imageCollectors map[string]*ImageCollector
+	imageCollectors map[string]*collector.ImageCollector
 }
 
-func New(imageRepo image.Repository, chunkRepo chunk.Repository, logger log.Logger) *Manager {
-	channel := make(chan string)
+func New(imageRepo image.Repository, imageChannel chan string, logger log.Logger) *Manager {
+	m := make(map[string]*collector.ImageCollector)
 	return &Manager{
-		imageRepo:    imageRepo,
-		chunkRepo:    chunkRepo,
-		logger:       logger,
-		imageChannel: channel,
+		imageRepo:       imageRepo,
+		logger:          logger,
+		imageChannel:    imageChannel,
+		imageCollectors: m,
 	}
 }
