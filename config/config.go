@@ -20,9 +20,13 @@ type HTTPServerConfig struct {
 	Address           string        `env:"HTTP_SERVER_ADDRESS,default=127.0.0.1"`
 	Port              uint          `env:"HTTP_SERVER_PORT,default=4444"`
 }
+type GrpcServiceConfig struct {
+	Address string `env:"GRPC_SERVER_ADDRESS,default=127.0.0.1:2020"`
+}
 type Config struct {
 	Database   DatabaseConfig
 	HTTPServer HTTPServerConfig
+	GrpcServer GrpcServiceConfig
 }
 
 // NewConfigFromEnv returns a *Config set by environment variables
