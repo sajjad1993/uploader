@@ -52,7 +52,7 @@ func (i ImageRepo) DoesExist(ctx context.Context, sha string) (bool, error) {
 
 func (i ImageRepo) Get(ctx context.Context, sha string) (*model.Image, error) {
 	sqlStatement := `
-	select sha , size, chunk_size , "status" , "created_at" from  images where sha = $1 limit 1`
+	select sha , size, chunk_size , "status","data" , "created_at" from  images where sha = $1 limit 1`
 	q := i.pgxPool.QueryRow(ctx, sqlStatement, sha)
 	return parseImage(q)
 }
@@ -60,10 +60,10 @@ func (i ImageRepo) Get(ctx context.Context, sha string) (*model.Image, error) {
 func (i ImageRepo) Save(ctx context.Context, image model.Image) error {
 
 	sqlStatement := `
-	INSERT INTO images (sha , size, chunk_size , "status" , "created_at")
-			VALUES ($1, $2, $3, $4,$5)`
+	INSERT INTO images (sha , size, chunk_size , "status" , "data" , "created_at")
+			VALUES ($1, $2, $3, $4,$5,$6)`
 
-	_, err := i.pgxPool.Exec(ctx, sqlStatement, image.Sha256, image.Size, image.ChunkSize, image.Status, time.Now().UTC())
+	_, err := i.pgxPool.Exec(ctx, sqlStatement, image.Sha256, image.Size, image.ChunkSize, image.Status, image.Data, time.Now().UTC())
 	return err
 }
 
@@ -76,7 +76,7 @@ func (i ImageRepo) Update(ctx context.Context, image model.Image) error {
 
 func parseImage(q pgx.Row) (*model.Image, error) {
 	resp := model.Image{}
-	err := q.Scan(&resp.Sha256, &resp.Size, &resp.ChunkSize, &resp.Status, &resp.CreatedAt)
+	err := q.Scan(&resp.Sha256, &resp.Size, &resp.ChunkSize, &resp.Status, &resp.Data, &resp.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

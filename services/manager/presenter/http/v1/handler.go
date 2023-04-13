@@ -3,7 +3,9 @@ package v1
 import (
 	"OMPFinex-CodeChallenge/services/manager/entity"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"net/http"
 )
 
@@ -53,5 +55,36 @@ func (h MangerHandler) createChunk(writer http.ResponseWriter, request *http.Req
 }
 
 func (h MangerHandler) getImage(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(request)
+	sha := vars["sha"]
+	reader, err := h.uploader.GetImage(request.Context(), sha)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writer.WriteHeader(http.StatusOK)
+	buf := make([]byte, 1024)
+	fmt.Println(" download output")
+	for {
+		// read a chunk
+		n, err := reader.Read(buf)
+		if err != nil && err != io.EOF {
+			h.logger.Error(err.Error())
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+
+		}
+		if n == 0 {
+			break
+		}
+		fmt.Printf("%s", buf)
+		// write a chunk
+		if _, err := writer.Write(buf[:n]); err != nil {
+
+			h.logger.Error(err.Error())
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+		}
+	}
 
 }

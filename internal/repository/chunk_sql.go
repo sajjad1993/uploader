@@ -23,7 +23,7 @@ func NewChunkRepo(dbPool *pgxpool.Pool) chunk.Repository {
 
 func (c ChunkRepo) GetAll(ctx context.Context, sha string) ([]model.Chunk, error) {
 	sqlStatement := `
-	select "id" , "size", "data" , "sha" , "created_at" from  chunks where sha = $1`
+	select "id" , "size", "data" , "sha" , "created_at" from  chunks where sha = $1 ORDER BY id ASC`
 	q, err := c.pgxPool.Query(ctx, sqlStatement, sha)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (c ChunkRepo) GetAll(ctx context.Context, sha string) ([]model.Chunk, error
 
 func (c ChunkRepo) Get(ctx context.Context, sha string, id int) (*model.Chunk, error) {
 	sqlStatement := `
-	select "id" , "size", "data" , "sha" , "created_at" from  chunks where sha = $1 AND id = $2 limit 1 ORDER BY id ASC`
+	select "id" , "size", "data" , "sha" , "created_at" from  chunks where sha = $1 AND id = $2 limit 1 `
 	q := c.pgxPool.QueryRow(ctx, sqlStatement, sha, id)
 	return parseChunk(q)
 }

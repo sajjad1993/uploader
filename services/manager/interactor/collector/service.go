@@ -53,6 +53,7 @@ func (c *Collector) GetChannel() chan string {
 	return c.imageChannel
 }
 func (ic *ImageCollector) Gather() {
+	fmt.Println("upload input ")
 	for chunkEnt := range ic.chunkChannel {
 
 		err := ic.writeChunk(chunkEnt)
@@ -83,6 +84,7 @@ func getChunkCount(image entity.Image) int {
 
 func (ic *ImageCollector) writeChunk(chunk entity.Chunk) error {
 	b := []byte(chunk.Data)
+	fmt.Printf("%s", b)
 	err := os.MkdirAll(chunk.FileDir(), 0777)
 
 	if err != nil && !os.IsExist(err) {

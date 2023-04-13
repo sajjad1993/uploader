@@ -6,6 +6,7 @@ import (
 	"OMPFinex-CodeChallenge/pkg/log"
 	"OMPFinex-CodeChallenge/services/manager/interactor/collector"
 	"OMPFinex-CodeChallenge/services/manager/interactor/downloader"
+	"OMPFinex-CodeChallenge/services/manager/interactor/uploader"
 	v1 "OMPFinex-CodeChallenge/services/manager/presenter/http/v1"
 	"context"
 	"fmt"
@@ -49,9 +50,9 @@ func main() {
 	}
 	go collectorService.CallMerger()
 	downloaderService := donwloder.New(imageRepo, collectorService.GetChannel(), logger)
-
+	uploaderService := uploader.New(imageRepo, chunkRepo, logger)
 	// Starting HTTP server
-	handler := v1.NewMangerHandler(downloaderService, collectorService, logger)
+	handler := v1.NewMangerHandler(downloaderService, collectorService, uploaderService, logger)
 	go runHTTPServer(handler,
 		configuration.HTTPServer.Address,
 		configuration.HTTPServer.Port,
