@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  ompdb:
+    image: postgres:13.4
+    container_name: ompdb
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - /var/lib/ompdb_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ompnet
+  merger:
+    image: omp/merger
+    container_name: merger
+    build:
+      context: .
+      dockerfile: Dockerfile-merger
+    networks:
+      - ompnet
+    depends_on:
+      - ompdb
+  manager:
+    image: omp/manager
+    container_name: manager
+    build:
+      context: .
+      dockerfile: Dockerfile-manager
+    networks:
+      - ompnet
+    depends_on:
+      - ompdb
+      - merger
+
+volumes:
+  ompdb_data:
+
+networks:
+  ompnet:
+    driver: bridge
