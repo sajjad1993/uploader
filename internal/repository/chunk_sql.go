@@ -42,8 +42,8 @@ func (c ChunkRepo) Save(ctx context.Context, chunk model.Chunk) error {
 	sqlStatement := `
 	INSERT INTO chunks ("id" , "size", "data" , "sha" , "created_at")
 			VALUES ($1, $2, $3, $4,$5)`
-	q := c.pgxPool.QueryRow(ctx, sqlStatement, chunk.ID, chunk.Size, chunk.Data, chunk.Sha256, time.Now().UTC())
-	return q.Scan()
+	_, err := c.pgxPool.Exec(ctx, sqlStatement, chunk.ID, chunk.Size, chunk.Data, chunk.Sha256, time.Now().UTC())
+	return err
 }
 
 func parseChunk(q pgx.Row) (*model.Chunk, error) {

@@ -7,6 +7,7 @@ import (
 
 type Reader interface {
 	CheckDuplicate(ctx context.Context, image model.Image) (bool, error)
+	DoesExist(ctx context.Context, sha string) (bool, error)
 	Get(ctx context.Context, sha string) (*model.Image, error)
 }
 
