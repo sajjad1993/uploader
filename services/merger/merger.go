@@ -33,12 +33,12 @@ func main() {
 	logger.Info("")
 	db, err := pgxpool.New(ctx, configuration.Database.Dsn)
 	if err != nil {
-		logger.Fatal("can't connect database")
+		logger.Fatal(fmt.Sprintf("can't connect database / %s", configuration.Database.Dsn))
 
 	}
 	err = db.Ping(ctx)
 	if err != nil {
-		logger.Fatal("can't connect database")
+		logger.Fatal(fmt.Sprintf("can't connect database / %s", configuration.Database.Dsn))
 	}
 	logger.Info("it connected to database successfully")
 

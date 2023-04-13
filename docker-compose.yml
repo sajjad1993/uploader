@@ -1,0 +1,74 @@
+version: '3'
+
+services:
+  ompdb:
+    image: postgres:13.4
+    container_name: ompdb
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - /var/lib/ompdb_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ompnet
+    ports:
+      - 5435:5432
+  merger:
+    image: omp/merger
+    container_name: merger
+    build:
+      context: .
+      dockerfile: ./Dockerfile-merger
+    volumes:
+      - ../storage:/app/storage
+    networks:
+      - ompnet
+    depends_on:
+      - ompdb
+    ports:
+      - 2020:2020
+    environment:
+      - DATABASE_DSN=host=ompdb user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC
+      - RETRY_DOWNLOAD=50
+      - RETRY_INTERVAL_DOWNLOAD=20ms
+      - HTTP_SERVER_READ_TIMEOUT=15s
+      - HTTP_SERVER_READ_HEADER_TIMEOUT=15s
+      - HTTP_SERVER_WRITE_TIMEOUT=15s
+      - HTTP_SERVER_ADDRESS=0.0.0.0
+      - HTTP_SERVER_PORT=4444
+      - GRPC_SERVER_ADDRESS=merger:2020
+      - GLOBAL_TIMEOUT=5s
+  manager:
+    image: omp/manager
+    container_name: manager
+    build:
+      context: .
+      dockerfile: ./Dockerfile-manager
+    volumes:
+      - ../storage:/app/storage
+    networks:
+      - ompnet
+    depends_on:
+      - ompdb
+      - merger
+    ports:
+      - 4444:4444
+    environment:
+      - DATABASE_DSN=host=ompdb user=postgres password=postgres port=5432  TimeZone=UTC sslmode=disable
+      - RETRY_DOWNLOAD=50
+      - RETRY_INTERVAL_DOWNLOAD=20ms
+      - HTTP_SERVER_READ_TIMEOUT=15s
+      - HTTP_SERVER_READ_HEADER_TIMEOUT=15s
+      - HTTP_SERVER_WRITE_TIMEOUT=15s
+      - HTTP_SERVER_ADDRESS=0.0.0.0
+      - HTTP_SERVER_PORT=4444
+      - GRPC_SERVER_ADDRESS=merger:2020
+      - GLOBAL_TIMEOUT=5s
+
+volumes:
+  ompdb_data:
+  storage:
+
+networks:
+  ompnet:
+    driver: bridge
