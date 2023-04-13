@@ -1,37 +1,41 @@
-version: "3.0"
+version: '3'
 
 services:
-  auth-db:
+  ompdb:
     image: postgres:13.4
-    container_name: merger-db
+    container_name: ompdb
     environment:
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./merger:/var/lib/postgresql/data
-      - ./../init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /var/lib/ompdb_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - hatman-network
-
-  service-merger:
-    image: hatman/auth
-    container_name: auth
+      - ompnet
+  merger:
+    image: omp/merger
+    container_name: merger
     build:
-      context: ./..
-    volumes:
-      - ../config/hatman-auth.yaml:/app/config/hatman-auth.yaml
-    ports:
-      - 1280:1280
-      - 1281:1281
+      context: .
+      dockerfile: Dockerfile-merger
     networks:
-      - hatman-network
+      - ompnet
     depends_on:
-      - auth-db
-    links:
-      - auth-db
+      - ompdb
+  manager:
+    image: omp/manager
+    container_name: manager
+    build:
+      context: .
+      dockerfile: Dockerfile-manager
+    networks:
+      - ompnet
+    depends_on:
+      - ompdb
+      - merger
 
 volumes:
-  auth_data:
+  ompdb_data:
 
 networks:
-  hatman-network:
+  ompnet:
     driver: bridge
