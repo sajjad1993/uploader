@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = ".;rpc";
+
+message Image {
+  string sha256 = 1;
+}
+
+message Error {
+  string Code = 1;
+  string Message = 2;
+}
+
+message MergeRequest {
+  Image Image = 1;
+}
+message MergeResponse {
+  Error  Error = 1;
+}
+
+service Merger {
+  rpc Merge (MergeRequest) returns (MergeResponse) {
+  }
+}
+
+
+
