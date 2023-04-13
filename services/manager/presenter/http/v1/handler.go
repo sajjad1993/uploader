@@ -13,6 +13,8 @@ func (h MangerHandler) registerImage(writer http.ResponseWriter, request *http.R
 	writer.Header().Set("Content-Type", "application/json")
 	var image entity.Image
 	err := json.NewDecoder(request.Body).Decode(&image)
+	writer.WriteHeader(http.StatusCreated)
+
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 	}
@@ -25,13 +27,14 @@ func (h MangerHandler) registerImage(writer http.ResponseWriter, request *http.R
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 	h.collector.StartCollecting(request.Context(), image)
-	writer.WriteHeader(http.StatusCreated)
 }
 
 func (h MangerHandler) createChunk(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 	var chunk entity.Chunk
 	err := json.NewDecoder(request.Body).Decode(&chunk)
+	writer.WriteHeader(http.StatusCreated)
+
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusBadRequest)
 	}
@@ -48,7 +51,6 @@ func (h MangerHandler) createChunk(writer http.ResponseWriter, request *http.Req
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
 
-	writer.WriteHeader(http.StatusCreated)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
@@ -60,11 +62,12 @@ func (h MangerHandler) getImage(writer http.ResponseWriter, request *http.Reques
 	vars := mux.Vars(request)
 	sha := vars["sha"]
 	reader, err := h.uploader.GetImage(request.Context(), sha)
+	writer.WriteHeader(http.StatusOK)
+
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writer.WriteHeader(http.StatusOK)
 	buf := make([]byte, 1024)
 	fmt.Println(" download output")
 	for {

@@ -12,8 +12,8 @@ type DatabaseConfig struct {
 	Dsn string `env:"DATABASE_DSN,default=host=localhost user=sajjad password=sajjad123 dbname=omp port=5432 sslmode=require TimeZone=UTC"`
 }
 type DownloadImageConfig struct {
-	Retry         uint          `env:"RETRY_DOWNLOAD,default=10"`
-	RetryInterval time.Duration `env:"RETRY_INTERVAL_DOWNLOAD,default=150ms"`
+	Retry         uint          `env:"RETRY_DOWNLOAD,default=50"`
+	RetryInterval time.Duration `env:"RETRY_INTERVAL_DOWNLOAD,default=20ms"`
 }
 
 // HTTPServerConfig represents HTTP server configuration values
