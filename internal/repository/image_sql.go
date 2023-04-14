@@ -21,21 +21,6 @@ func NewImageRepo(dbPool *pgxpool.Pool) image.Repository {
 	}
 }
 
-// todo delete this
-func (i ImageRepo) CheckDuplicate(ctx context.Context, image model.Image) (bool, error) {
-	sqlStatement := `
-	select count(*) from images where sha = $1`
-
-	q := i.pgxPool.QueryRow(ctx, sqlStatement, image.Sha256)
-	var totalCount int64
-
-	err := q.Scan(&totalCount)
-	if err != nil {
-		return false, err
-	}
-	return totalCount > 0, nil
-}
-
 func (i ImageRepo) DoesExist(ctx context.Context, sha string) (bool, error) {
 	sqlStatement := `
 	select count(*) from images where sha = $1`
@@ -63,7 +48,7 @@ func (i ImageRepo) Save(ctx context.Context, image model.Image) error {
 	INSERT INTO images (sha , size, chunk_size , "status" , "data" , "created_at")
 			VALUES ($1, $2, $3, $4,$5,$6)`
 
-	_, err := i.pgxPool.Exec(ctx, sqlStatement, image.Sha256, image.Size, image.ChunkSize, image.Status, image.Data, time.Now().UTC())
+	_, err := i.pgxPool.Exec(ctx, sqlStatement, image.Sha256, image.Size, image.ChunkSize, image.Status, image, time.Now().UTC())
 	return err
 }
 

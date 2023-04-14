@@ -11,12 +11,12 @@ func (m *Manager) RegisterImage(ctx context.Context, image entity.Image) error {
 	image.Status = string(entity.UnCompletedStatus)
 	imageModel := entity.ImageEntityToModel(image)
 	//check duplicate image
-	isDuplicate, err := m.imageRepo.CheckDuplicate(ctx, imageModel)
+	ok, err := m.imageRepo.DoesExist(ctx, imageModel.Sha256)
 	if err != nil {
 		m.logger.Error(err.Error())
 		return err
 	}
-	if isDuplicate {
+	if ok {
 		//todo it must return 409 status
 		return errs.NewConflictEntity("this image have already registered")
 	}
