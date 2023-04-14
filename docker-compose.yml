@@ -29,8 +29,9 @@ services:
       - 2020:2020
     environment:
       - DATABASE_DSN=host=ompdb user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=UTC
-      - RETRY_DOWNLOAD=50
-      - RETRY_INTERVAL_DOWNLOAD=20ms
+      - DISABLE_DATABASE=false
+      - RETRY_DOWNLOAD=60
+      - RETRY_INTERVAL_DOWNLOAD=80ms
       - HTTP_SERVER_READ_TIMEOUT=15s
       - HTTP_SERVER_READ_HEADER_TIMEOUT=15s
       - HTTP_SERVER_WRITE_TIMEOUT=15s
@@ -55,8 +56,9 @@ services:
       - 4444:4444
     environment:
       - DATABASE_DSN=host=ompdb user=postgres password=postgres port=5432  TimeZone=UTC sslmode=disable
-      - RETRY_DOWNLOAD=50
-      - RETRY_INTERVAL_DOWNLOAD=20ms
+      - DISABLE_DATABASE=false
+      - RETRY_DOWNLOAD=60
+      - RETRY_INTERVAL_DOWNLOAD=80ms
       - HTTP_SERVER_READ_TIMEOUT=15s
       - HTTP_SERVER_READ_HEADER_TIMEOUT=15s
       - HTTP_SERVER_WRITE_TIMEOUT=15s

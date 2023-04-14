@@ -21,21 +21,6 @@ func NewImageRepo(dbPool *pgxpool.Pool) image.Repository {
 	}
 }
 
-// todo delete this
-func (i ImageRepo) CheckDuplicate(ctx context.Context, image model.Image) (bool, error) {
-	sqlStatement := `
-	select count(*) from images where sha = $1`
-
-	q := i.pgxPool.QueryRow(ctx, sqlStatement, image.Sha256)
-	var totalCount int64
-
-	err := q.Scan(&totalCount)
-	if err != nil {
-		return false, err
-	}
-	return totalCount > 0, nil
-}
-
 func (i ImageRepo) DoesExist(ctx context.Context, sha string) (bool, error) {
 	sqlStatement := `
 	select count(*) from images where sha = $1`
