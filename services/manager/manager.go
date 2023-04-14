@@ -2,6 +2,8 @@ package main
 
 import (
 	"OMPFinex-CodeChallenge/config"
+	"OMPFinex-CodeChallenge/internal/contract/chunk"
+	"OMPFinex-CodeChallenge/internal/contract/image"
 	"OMPFinex-CodeChallenge/internal/repository"
 	"OMPFinex-CodeChallenge/pkg/log"
 	"OMPFinex-CodeChallenge/services/manager/interactor/collector"
@@ -26,23 +28,30 @@ func main() {
 	defer cancel()
 	// setting config
 	configuration, err := config.NewConfigFromEnv(ctx)
+	logger.Info(fmt.Sprintf("download-interval = %s | retry = %d ", configuration.DownloadImage.RetryInterval, configuration.DownloadImage.Retry))
 	if err != nil {
 		logger.Fatal("can't read config")
 	}
-	logger.Info("")
-	db, err := pgxpool.New(ctx, configuration.Database.Dsn)
-	if err != nil {
-		logger.Fatal("can't connect database")
 
-	}
-	err = db.Ping(ctx)
-	if err != nil {
-		logger.Fatal("can't connect database")
-	}
-	logger.Info("it connected to database successfully")
+	// create repository instance
+	var imageRepo image.Repository
+	var chunkRepo chunk.Repository
 
-	imageRepo := repository.NewImageRepo(db)
-	chunkRepo := repository.NewChunkRepo(db)
+	if configuration.Database.Disable {
+		logger.Info("create none database repository")
+
+		imageRepo, chunkRepo, err = noneDatabaseRepository(configuration, logger)
+		if err != nil {
+			logger.Fatal("can't connect repository")
+		}
+	} else {
+		logger.Info("create  database repository")
+
+		imageRepo, chunkRepo, err = databaseRepository(logger, ctx, configuration)
+		if err != nil {
+			logger.Fatal("can't connect repository")
+		}
+	}
 
 	collectorService, err := collector.New(imageRepo, chunkRepo, configuration.GrpcServer.Address, logger, configuration.GlobalTimeOut)
 	if err != nil {
@@ -67,6 +76,35 @@ func main() {
 	<-stopSignal
 
 	logger.Info("stopped Swap server")
+}
+
+func databaseRepository(logger log.Logger, ctx context.Context, configuration config.Config) (image.Repository, chunk.Repository, error) {
+	logger.Info("")
+	db, err := pgxpool.New(ctx, configuration.Database.Dsn)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = db.Ping(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	logger.Info("it connected to database successfully")
+	imageRepo := repository.NewImageRepo(db)
+	chunkRepo := repository.NewChunkRepo(db)
+	return imageRepo, chunkRepo, nil
+}
+
+func noneDatabaseRepository(configuration config.Config, logger log.Logger) (image.Repository, chunk.Repository, error) {
+	storageConfig := configuration.Storage
+	imageRepo, err := repository.NewImageMemory(storageConfig.Images, storageConfig.Chunks)
+	if err != nil {
+		return nil, nil, err
+	}
+	chunkRepo, err := repository.NewChunkMemory(storageConfig.Images, storageConfig.Chunks)
+	if err != nil {
+		return nil, nil, err
+	}
+	return imageRepo, chunkRepo, nil
 }
 
 func runHTTPServer(

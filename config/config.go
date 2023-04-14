@@ -9,11 +9,16 @@ import (
 
 // DatabaseConfig represents database configuration values
 type DatabaseConfig struct {
-	Dsn string `env:"DATABASE_DSN,default=host=localhost user=sajjad password=sajjad123 dbname=omp port=5432 sslmode=require TimeZone=UTC"`
+	Dsn     string `env:"DATABASE_DSN,default=host=localhost user=sajjad password=sajjad123 dbname=omp port=5432 sslmode=require TimeZone=UTC"`
+	Disable bool   `env:"DISABLE_DATABASE,default=true"`
+}
+type StorageConfig struct {
+	Images string `env:"IMAGES_STORAGE,default=storage/images"`
+	Chunks string `env:"CHUNKS_STORAGE,default=storage/chunks"`
 }
 type DownloadImageConfig struct {
-	Retry         uint          `env:"RETRY_DOWNLOAD,default=50"`
-	RetryInterval time.Duration `env:"RETRY_INTERVAL_DOWNLOAD,default=20ms"`
+	Retry         uint          `env:"RETRY_DOWNLOAD,default=60"`
+	RetryInterval time.Duration `env:"RETRY_INTERVAL_DOWNLOAD,default=50ms"`
 }
 
 // HTTPServerConfig represents HTTP server configuration values
@@ -29,6 +34,7 @@ type GrpcServiceConfig struct {
 }
 type Config struct {
 	Database      DatabaseConfig
+	Storage       StorageConfig
 	HTTPServer    HTTPServerConfig
 	GrpcServer    GrpcServiceConfig
 	DownloadImage DownloadImageConfig

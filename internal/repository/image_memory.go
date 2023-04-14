@@ -3,29 +3,65 @@ package repository
 import (
 	"OMPFinex-CodeChallenge/internal/contract/image"
 	"OMPFinex-CodeChallenge/internal/model"
+	"OMPFinex-CodeChallenge/pkg/errs"
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
+	"path/filepath"
 )
 
 // ImageMemory  memory repo
 type ImageMemory struct {
+	imageDir string
+	chunkDir string
 }
 
 // NewImageMemory  creates new repository
-func NewImageMemory(dbPool *pgxpool.Pool) image.Repository {
-	return &ImageMemory{}
+func NewImageMemory(imageDir, chunkDir string) (image.Repository, error) {
+	err := createDir(imageDir)
+	if err != nil {
+		return nil, err
+	}
+	err = createDir(chunkDir)
+	if err != nil {
+		return nil, err
+	}
+	return &ImageMemory{
+		imageDir: imageDir,
+		chunkDir: chunkDir,
+	}, nil
 }
 
 func (i ImageMemory) DoesExist(ctx context.Context, sha string) (bool, error) {
-	return false, nil
+	return isDirExists(filepath.Join(i.chunkDir, sha))
 }
 
 func (i ImageMemory) Get(ctx context.Context, sha string) (*model.Image, error) {
-	return nil, nil
+
+	ok, err := isDirExists(filepath.Join(i.chunkDir, sha))
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errs.NewNotFoundError(fmt.Sprintf("sha %s doesn't exist", sha))
+	}
+	imageModel := model.Image{
+		Sha256: sha,
+		Status: string(model.UnCompletedStatus),
+	}
+	ok, err = isFileExists(filepath.Join(i.imageDir, sha))
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return &imageModel, nil
+	}
+	imageModel.Data = filepath.Join(i.imageDir, sha)
+	imageModel.Status = string(model.ReadyStatus)
+	return &imageModel, nil
+
 }
 
 func (i ImageMemory) Save(ctx context.Context, image model.Image) error {
-
 	return nil
 }
 

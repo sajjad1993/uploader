@@ -33,6 +33,9 @@ func (c *Chunk) IsValid() error {
 	return nil
 }
 
+func (i *Image) ChunkDir() string {
+	return fmt.Sprintf("storage/chunks/%s", i.Sha256)
+}
 func (c *Chunk) FileDir() string {
 	return fmt.Sprintf("storage/chunks/%s", c.Sha256)
 }

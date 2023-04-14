@@ -42,7 +42,7 @@ func (c *Collector) CallMerger() {
 		c.logger.Info(fmt.Sprintf("image %s has been completed", imageHash))
 		_, err := c.client.Merge(ctx, &rpc.MergeRequest{Image: &rpc.Image{Sha256: imageHash}})
 		if err != nil {
-			c.logger.Error(fmt.Sprintf("image %s has been completed", imageHash))
+			c.logger.Error(fmt.Sprintf("can't send image %s / %s", imageHash, err))
 		}
 
 	}
