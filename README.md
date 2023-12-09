@@ -1,18 +1,10 @@
-# Programming exercise
-
-Thanks for trying our programming exercise!
+# Hackethon Challenge
 
 With this document you should have received three executable files:
 
 + [`ascii_linux_x64`](ascii_linux_x64): executable binary compiled for linux x64 platforms
 + [`ascii_darwin_x64`](ascii_darwin_x64): executable binary compiled for MacOS x64 platforms
 + [`ascii_windows_x64`](ascii_windows_x64.exe): executable binary compiled for Windows x64 platforms
-
-Please contact us immediately if:
-
-+ the executable for your platform is missing
-+ you think there are problems with the provided executable files
-
 
 ## The Challenge
 
@@ -153,22 +145,6 @@ running and listening on `http://localhost:4444`. Ensure our executable has exec
 ```bash
 ./ascii_<platform>_x64
 ```
-
-This will start our testing client. It will immediately start communicating with your server. You will know the execution was successful when it is printing:
-
 ```text
 Success!
 ```
-
-## Assessment Criteria
-
-We expect you to write code you would consider production-ready.
-This means we expect your code to be well factored and following good practices.
-
-What we will look at:
-
-+ If your code fulfils the requirements, and runs against the
-supplied client.
-+ How clean is your design and implementation, how easy it is to
-understand and maintain your code.
-+ How your server behaves under stress in terms of resource utilization (e.g. CPU or memory usage)
