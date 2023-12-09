@@ -1,6 +1,6 @@
-# Hackethon Challenge
+# Challenge
 
-With this document you should have received three executable files:
+With this document, you should have received three executable files:
 
 + [`ascii_linux_x64`](ascii_linux_x64): executable binary compiled for linux x64 platforms
 + [`ascii_darwin_x64`](ascii_darwin_x64): executable binary compiled for MacOS x64 platforms
@@ -12,8 +12,8 @@ The proposed challenge is to implement an ASCII art hosting web service. The web
 
 The provided executable will simulate a client's interactions with the web service. They will connect through port `4444` on `localhost`.  Once connected, clients will be sending three kinds of requests in the following sequence:
 
-1. **Image registration**: The client registers an image for upload. In order to register an image, the client provides its SHA256 hash for further reference. Registering an already existing image should result in an error (`409 Conflict`).
-2. **Image chunks upload**: The client splits the image content in a sequence of chunks and uploads them. It sends each chunk separately as a JSON payload. Each chunk has an ID indicating its position in the sequence
+1. **Image registration**: The client registers an image for upload. To register an image, the client provides its SHA256 hash for further reference. Registering an already existing image should result in an error (`409 Conflict`).
+2. **Image chunks upload**: The client splits the image content into a sequence of chunks and uploads them. It sends each chunk separately as a JSON payload. Each chunk has an ID indicating its position in the sequence
 3. **Downloading the complete image**: The client downloads the image from the web service. It then computes the downloaded image hash and compares it to the registered image. It is expected that an image could be downloaded multiple times.
 
 The executable's output for a single image upload sequence will look like the following:
@@ -30,10 +30,10 @@ time="2019-02-28T11:55:16+01:00" level=info msg="succesfully retrieved image" im
 
 ## Notes
 
-1. You should create two services: one for uploading the chunkcs and one for merging them.
-2. these services should communicate via gRPC and use protobuf as data format.
+1. You should create two services: one for uploading the chunks and one for merging them.
+2. these services should communicate via gRPC and use protobuf as a data format.
 3. the chunks must be stored in a shared repository.
-4. Your services needs to be resilient to failures and to be able to restart or retry if an error occurred.
+4. Your services needs to be resilient to failures and  be able to restart or retry if an error occurs.
 
 ## The API
 
@@ -139,7 +139,7 @@ docker-compose up -d --build
 ./ascii_<platform>_x64
 ```
 
-To test your solution, first make sure you have your server
+To test your solution, first, make sure you have your server
 running and listening on `http://localhost:4444`. Ensure our executable has execution rights (`chmod +x`) and run it:
 
 ```bash
